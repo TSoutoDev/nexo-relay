@@ -17,7 +17,7 @@ const server = http.createServer((req, res) => {
   }
 });
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server, maxPayload: 20 * 1024 * 1024 }); // 20MB max
 
 // peerId -> ws
 const clients = new Map();
