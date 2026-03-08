@@ -42,8 +42,8 @@ wss.on('connection', (ws) => {
         // Flush queued packets
         const q = queue.get(myId) || [];
         const now = Date.now();
-        const fresh = q.filter(p => now - p._ts < QUEUE_TTL);
-        fresh.forEach(p => { delete p._ts; ws.send(JSON.stringify(p)); });
+        const fresh = q.filter(p => (now - p._ts) < (p._ttl || QUEUE_TTL));
+        fresh.forEach(p => { delete p._ts; delete p._ttl; ws.send(JSON.stringify(p)); });
         queue.delete(myId);
         ws.send(JSON.stringify({ type: 'REGISTERED', queued: fresh.length }));
         break;
@@ -73,12 +73,13 @@ wss.on('connection', (ws) => {
         if (target && target.readyState === WebSocket.OPEN) {
           target.send(JSON.stringify(pkt));
         } else {
-          // Queue for later (except ephemeral types)
-          const ephemeral = ['TYPING','CALL_OFFER','CALL_ANSWER','CALL_ICE','CALL_REJECT','CALL_END'];
+          // Queue for later — CALL_OFFER kept 60s, fully ephemeral types discarded
+          const ephemeral = ['TYPING','CALL_ANSWER','CALL_ICE','CALL_REJECT','CALL_END'];
           if (!ephemeral.includes(pkt.type)) {
             if (!queue.has(to)) queue.set(to, []);
             const q = queue.get(to);
             pkt._ts = Date.now();
+            if (pkt.type === 'CALL_OFFER') pkt._ttl = 60000; // short TTL for missed calls
             q.push(pkt);
             if (q.length > MAX_QUEUE) q.shift();
           }
