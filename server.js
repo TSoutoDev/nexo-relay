@@ -73,8 +73,9 @@ wss.on('connection', (ws) => {
         if (target && target.readyState === WebSocket.OPEN) {
           target.send(JSON.stringify(pkt));
         } else {
-          // Queue for later (except TYPING — ephemeral)
-          if (pkt.type !== 'TYPING') {
+          // Queue for later (except ephemeral types)
+          const ephemeral = ['TYPING','CALL_OFFER','CALL_ANSWER','CALL_ICE','CALL_REJECT','CALL_END'];
+          if (!ephemeral.includes(pkt.type)) {
             if (!queue.has(to)) queue.set(to, []);
             const q = queue.get(to);
             pkt._ts = Date.now();
