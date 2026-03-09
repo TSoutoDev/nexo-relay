@@ -73,7 +73,11 @@ wss.on('connection', (ws) => {
       case 'GC_REJECT':
       case 'GC_END':
       case 'GC_MEMBERS':
-      case 'GC_HELLO': {
+      case 'GC_HELLO':
+      case 'GROUP_INVITE':
+      case 'GROUP_MSG':
+      case 'GROUP_MEMBER_ADDED':
+      case 'GROUP_MEMBER_LEFT': {
         const to = pkt.to;
         if (!to) break;
         const target = clients.get(to);
@@ -83,7 +87,7 @@ wss.on('connection', (ws) => {
           target.send(JSON.stringify(pkt));
         } else {
           // Queue for later — CALL_OFFER kept 60s, fully ephemeral types discarded
-          const ephemeral = ['TYPING','CALL_ANSWER','CALL_ICE','CALL_REJECT','CALL_END','GC_JOINED','GC_OFFER','GC_ANSWER','GC_ICE','GC_REJECT','GC_END','GC_MEMBERS','GC_HELLO'];
+          const ephemeral = ['TYPING','CALL_ANSWER','CALL_ICE','CALL_REJECT','CALL_END','GC_JOINED','GC_OFFER','GC_ANSWER','GC_ICE','GC_REJECT','GC_END','GC_MEMBERS','GC_HELLO','GROUP_MEMBER_ADDED','GROUP_MEMBER_LEFT'];
           if (!ephemeral.includes(pkt.type)) {
             if (!queue.has(to)) queue.set(to, []);
             const q = queue.get(to);
